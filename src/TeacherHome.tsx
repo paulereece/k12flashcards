@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getDecks, createDeck, uploadCards, getCardsForDeck, deleteDeck } from './supabasehelpers';
-import Papa from 'papaparse';
+import { getDecks, createDeck, uploadCards, deleteDeck } from './supabasehelpers';
 import { useNavigate } from 'react-router-dom';
 import TeacherLayout from './TeacherLayout';
 import { supabase } from './supabaseClient';
@@ -13,8 +12,8 @@ type Deck = {
 
 function TeacherHome() {
   const [decks, setDecks] = useState<Deck[]>([]);
-  const [selectedCards, setSelectedCards] = useState<{ question: string; answer: string }[]>([]);
-  const [showModal, setShowModal] = useState(false);
+
+
   const [loading, setLoading] = useState(true);
   const [addCardModal, setAddCardModal] = useState<{ open: boolean; deckId: string | null }>({ open: false, deckId: null });
   const [newCards, setNewCards] = useState<{ question: string; answer: string }[]>([]);
@@ -27,7 +26,7 @@ function TeacherHome() {
 
   useEffect(() => {
     async function checkAuth() {
-      const { data, error } = await supabase.auth.getUser();
+      const { data } = await supabase.auth.getUser();
       if (!data.user) {
         navigate('/login');
       } else {
@@ -77,48 +76,7 @@ function TeacherHome() {
     }
   };
 
-  const handleUploadCards = async (e: React.ChangeEvent<HTMLInputElement>, deckId: string) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
 
-    Papa.parse(file, {
-      complete: async (result: any) => {
-        const data = result.data as string[][];
-
-        const cards = data
-          .filter(row => row.length === 2 && row[0].trim() && row[1].trim())
-          .map(([question, answer]) => ({
-            question: question.trim(),
-            answer: answer.trim(),
-            deck_id: deckId,
-          }));
-
-        if (cards.length === 0) {
-          alert("No valid cards found in CSV.");
-          return;
-        }
-
-        const { error } = await uploadCards(cards);
-        if (error) {
-          console.error("Upload error:", error.message);
-          alert("Error uploading cards.");
-        } else {
-          alert("Cards uploaded!");
-          console.log("Cards inserted into Supabase.");
-        }
-      }
-    });
-  };
-
-  const handleViewCards = async (deckId: string) => {
-    const { data, error } = await getCardsForDeck(deckId);
-    if (error || !data) {
-      alert("Error fetching cards.");
-      return;
-    }
-    setSelectedCards(data);
-    setShowModal(true);
-  };
 
   const handleDeleteDeck = async (deckId: string) => {
     if (!window.confirm('Are you sure you want to delete this deck? This cannot be undone.')) return;
@@ -149,12 +107,7 @@ function TeacherHome() {
     }
   };
 
-  const handleOpenAddCardModal = (deckId: string) => {
-    setAddCardModal({ open: true, deckId });
-    setNewCards([]);
-    setQuestionInput('');
-    setAnswerInput('');
-  };
+
 
   const handleAddCardToList = () => {
     if (!questionInput.trim() || !answerInput.trim()) return;
@@ -239,22 +192,7 @@ function TeacherHome() {
         </div>
       ))}
 
-      {showModal && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modal}>
-            <h2>Cards</h2>
-            <ul>
-              {selectedCards.map((card, idx) => (
-                <li key={idx}>
-                  <strong>Q:</strong> {card.question}<br />
-                  <strong>A:</strong> {card.answer}
-                </li>
-              ))}
-            </ul>
-            <button onClick={() => setShowModal(false)} style={styles.closeModalButton}>Close</button>
-          </div>
-        </div>
-      )}
+
 
       {addCardModal.open && (
         <div style={styles.modalOverlay}>

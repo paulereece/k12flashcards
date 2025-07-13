@@ -11,7 +11,6 @@ const StudentDashboard: React.FC = () => {
 
   // For demo: get class_id from localStorage or hardcode
   const classId = localStorage.getItem('studentClassId') || '';
-  const userId = supabase.auth.getUser()?.then(res => res.data.user?.id) || null;
 
   useEffect(() => {
     async function fetchAssignments() {

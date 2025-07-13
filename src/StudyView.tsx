@@ -15,10 +15,7 @@ type StudyViewProps = {
 function StudyView(props: StudyViewProps) {
   const {
     deckId,
-    mode = 'preview',
-    spacedRepetition = false,
     onComplete = null,
-    assignmentId,
   } = props;
 
   type StudyCard = {
@@ -33,7 +30,6 @@ function StudyView(props: StudyViewProps) {
 
   const [cards, setCards] = useState<StudyCard[]>([]);
   const [current, setCurrent] = useState<StudyCard | null>(null);
-  const [prevCardId, setPrevCardId] = useState<string | null>(null);
   const [userAnswer, setUserAnswer] = useState('');
   const [feedback, setFeedback] = useState('');
   const [sessionStarted, setSessionStarted] = useState<Date | null>(null);
@@ -86,7 +82,6 @@ function StudyView(props: StudyViewProps) {
       loaded = shuffle(loaded);
       setCards(loaded);
       setCurrent(loaded[0] || null);
-      setPrevCardId(null);
       setSessionStarted(new Date());
     }
     loadCards();
@@ -185,7 +180,6 @@ function StudyView(props: StudyViewProps) {
     if (!current) return;
     setFeedback('');
     setUserAnswer('');
-    setPrevCardId(current.id);
     // Select next card
     const next = selectNextCard(cards, current.id);
     setCurrent(next);
