@@ -22,7 +22,6 @@ function TeacherHome() {
   const navigate = useNavigate();
   const [classes, setClasses] = useState<any[]>([]);
   const [assigningDeckId, setAssigningDeckId] = useState<string | null>(null);
-  const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]);
   const [dueDate, setDueDate] = useState<string>(() => {
     const today = new Date();
@@ -92,27 +91,6 @@ function TeacherHome() {
       setDecks((prev) => prev.filter((deck) => deck.id !== deckId));
     }
   };
-
-  const handleAssignDeck = async (deckId: string, classId: string) => {
-    if (!classId) return;
-    // Get current teacher's id
-    const { data: userData } = await supabase.auth.getUser();
-    const teacherId = userData?.user?.id;
-    if (!teacherId) {
-      alert('Could not determine teacher id. Please log in again.');
-      return;
-    }
-    const { error } = await supabase.from('assignments').insert({ deck_id: deckId, class_id: classId, teacher_id: teacherId });
-    if (error) {
-      alert('Error assigning deck.');
-    } else {
-      alert('Deck assigned!');
-      setAssigningDeckId(null);
-      setSelectedClassId('');
-    }
-  };
-
-
 
   const handleAddCardToList = () => {
     if (!questionInput.trim() || !answerInput.trim()) return;
