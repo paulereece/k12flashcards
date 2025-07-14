@@ -23,6 +23,11 @@ function TeacherHome() {
   const [classes, setClasses] = useState<any[]>([]);
   const [assigningDeckId, setAssigningDeckId] = useState<string | null>(null);
   const [selectedClassId, setSelectedClassId] = useState<string>('');
+  const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]);
+  const [dueDate, setDueDate] = useState<string>(() => {
+    const today = new Date();
+    return today.toISOString().slice(0, 10); // YYYY-MM-DD
+  });
 
   useEffect(() => {
     async function checkAuth() {
@@ -165,33 +170,83 @@ function TeacherHome() {
               <button style={styles.assignButton} onClick={() => setAssigningDeckId(deck.id)}>
                 Assign Deck
               </button>
-              {assigningDeckId === deck.id && (
-                <select
-                  style={styles.classDropdown}
-                  value={selectedClassId}
-                  onChange={e => setSelectedClassId(e.target.value)}
-                >
-                  <option value="">Select class...</option>
-                  {classes.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-              )}
-              {assigningDeckId === deck.id && selectedClassId && (
-                <button style={styles.confirmAssignButton} onClick={() => handleAssignDeck(deck.id, selectedClassId)}>
-                  Confirm
-                </button>
-              )}
-              {assigningDeckId === deck.id && (
-                <button style={styles.cancelAssignButton} onClick={() => { setAssigningDeckId(null); setSelectedClassId(''); }}>
-                  Cancel
-                </button>
-              )}
             </div>
           </div>
         </div>
       ))}
 
+      {/* Assign Deck Modal */}
+      {assigningDeckId && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modal}>
+            <h2 style={{ marginBottom: '1rem', fontWeight: 700 }}>
+              Assign Deck: {decks.find(d => d.id === assigningDeckId)?.name || ''}
+            </h2>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ marginBottom: '0.5rem', fontWeight: 500, display: 'block' }}>Select Classes:</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                {classes.map(c => (
+                  <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedClassIds.includes(c.id)}
+                      onChange={e => {
+                        if (e.target.checked) {
+                          setSelectedClassIds(prev => [...prev, c.id]);
+                        } else {
+                          setSelectedClassIds(prev => prev.filter(id => id !== c.id));
+                        }
+                      }}
+                    />
+                    {c.name}
+                  </label>
+                ))}
+              </div>
+              <label style={{ marginBottom: '0.5rem', fontWeight: 500, display: 'block' }}>Due Date:</label>
+              <input
+                type="date"
+                value={dueDate}
+                min={new Date().toISOString().slice(0, 10)}
+                onChange={e => setDueDate(e.target.value)}
+                style={{ ...styles.addCardInput, maxWidth: '200px', marginBottom: '1.5rem' }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button
+                style={styles.saveNewCardsButton}
+                disabled={selectedClassIds.length === 0 || !dueDate}
+                onClick={async () => {
+                  // Assign to all selected classes
+                  const { data: userData } = await supabase.auth.getUser();
+                  const teacherId = userData?.user?.id;
+                  if (!teacherId) {
+                    alert('Could not determine teacher id. Please log in again.');
+                    return;
+                  }
+                  const inserts = selectedClassIds.map(classId => ({ deck_id: assigningDeckId, class_id: classId, teacher_id: teacherId, due_date: dueDate }));
+                  const { error } = await supabase.from('assignments').insert(inserts);
+                  if (error) {
+                    alert('Error assigning deck.');
+                  } else {
+                    alert('Deck assigned!');
+                    setAssigningDeckId(null);
+                    setSelectedClassIds([]);
+                    setDueDate(new Date().toISOString().slice(0, 10));
+                  }
+                }}
+              >
+                Confirm
+              </button>
+              <button
+                style={styles.cancelModalButton}
+                onClick={() => { setAssigningDeckId(null); setSelectedClassIds([]); setDueDate(new Date().toISOString().slice(0, 10)); }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
 
       {addCardModal.open && (

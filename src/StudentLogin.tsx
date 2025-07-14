@@ -31,6 +31,7 @@ const StudentLogin: React.FC = () => {
     if (authError) {
       setError('Invalid username or password.');
     } else {
+      localStorage.setItem('studentClassId', classId); // Store classId for assignment fetching
       navigate('/student-dashboard');
     }
   };

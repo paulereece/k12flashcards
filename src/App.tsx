@@ -10,6 +10,7 @@ import ClassDetails from './ClassDetails';
 import StudentLogin from './StudentLogin';
 import StudentDashboard from './StudentDashboard';
 import TeacherAssignments from './TeacherAssignments';
+import AssignmentAnalytics from './AssignmentAnalytics';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
         <Route path="/student-login" element={<StudentLogin />} />
         <Route path="/student-dashboard" element={<StudentDashboard />} />
         <Route path="/assignments" element={<TeacherAssignments />} />
+        <Route path="/assignments/:assignmentId/analytics" element={<AssignmentAnalytics />} />
       </Routes>
     </Router>
   );

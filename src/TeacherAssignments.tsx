@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TeacherLayout from './TeacherLayout';
 import { supabase } from './supabaseClient';
 
 const TeacherAssignments: React.FC = () => {
   const [assignments, setAssignments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchAssignments() {
@@ -47,7 +49,20 @@ const TeacherAssignments: React.FC = () => {
                 <div style={{ color: '#555', fontSize: '0.98rem' }}>Class: {a.classes?.name || a.class_id}</div>
                 <div style={{ color: '#888', fontSize: '0.95rem' }}>Assigned: {a.created_at ? new Date(a.created_at).toLocaleDateString() : 'N/A'}</div>
               </div>
-              <button onClick={() => handleDelete(a.id)} style={{ background: '#dc3545', color: 'white', border: 'none', borderRadius: 6, padding: '8px 16px', fontWeight: 500, cursor: 'pointer' }}>Delete</button>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <button 
+                  onClick={() => navigate(`/assignments/${a.id}/analytics`)} 
+                  style={{ background: '#007bff', color: 'white', border: 'none', borderRadius: 6, padding: '8px 16px', fontWeight: 500, cursor: 'pointer' }}
+                >
+                  View Assignment Info
+                </button>
+                <button 
+                  onClick={() => handleDelete(a.id)} 
+                  style={{ background: '#dc3545', color: 'white', border: 'none', borderRadius: 6, padding: '8px 16px', fontWeight: 500, cursor: 'pointer' }}
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>
