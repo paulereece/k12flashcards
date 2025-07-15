@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from './supabaseClient';
+// import { supabase } from './supabaseClient';
 
 function UpdatePassword() {
   const [password, setPassword] = useState('');
@@ -9,25 +9,15 @@ function UpdatePassword() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Convert #access_token=... to ?access_token=... so Supabase can use it
-    const hash = window.location.hash;
-    if (hash && hash.includes('access_token')) {
-      const newUrl = window.location.origin + '/update-password' + hash.replace('#', '?');
-      window.location.replace(newUrl);
-    }
+    // TODO: Handle password reset token if needed for Auth0/Clerk
   }, []);
 
   const handleUpdatePassword = async () => {
     setError('');
     setMessage('');
-
-    const { error } = await supabase.auth.updateUser({ password });
-    if (error) {
-      setError(error.message);
-    } else {
-      setMessage('Password updated! You can now log in.');
-      setTimeout(() => navigate('/'), 2000); // redirect to login page
-    }
+    // TODO: Implement password update with Auth0/Clerk or custom Neon/Postgres logic
+    // On success: setMessage('Password updated! You can now log in.'); setTimeout(() => navigate('/'), 2000);
+    // On error: setError('Password update failed.');
   };
 
   return (
@@ -68,6 +58,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     minWidth: '300px',
   },
   title: {
+    marginBottom: '1rem',
     fontSize: '1.5rem',
   },
   input: {
@@ -79,7 +70,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   button: {
     padding: '0.75rem',
     fontSize: '1rem',
-    backgroundColor: '#28a745',
+    backgroundColor: '#007bff',
     color: 'white',
     border: 'none',
     borderRadius: '5px',
@@ -87,10 +78,12 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   error: {
     color: 'red',
+    marginTop: '0.5rem',
     fontSize: '0.9rem',
   },
   success: {
     color: 'green',
+    marginTop: '0.5rem',
     fontSize: '0.9rem',
   },
 };

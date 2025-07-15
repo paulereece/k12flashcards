@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { getDecks, createDeck, uploadCards, deleteDeck } from './supabasehelpers';
+// import { getDecks, createDeck, uploadCards, deleteDeck } from './supabasehelpers';
 import { useNavigate } from 'react-router-dom';
 import TeacherLayout from './TeacherLayout';
-import { supabase } from './supabaseClient';
+// import { supabase } from './supabaseClient';
 
 type Deck = {
   id: string;
@@ -30,86 +30,34 @@ function TeacherHome() {
   });
 
   useEffect(() => {
-    async function checkAuth() {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user) {
-        navigate('/login');
-      } else {
-        setLoading(false);
-      }
-    }
-    checkAuth();
+    // TODO: Replace with Auth0/Clerk authentication check
+    // Example: if (!isAuthenticated) navigate('/login');
+    setLoading(false); // Remove this when real auth is in place
   }, [navigate]);
 
   useEffect(() => {
-    async function fetchDecks() {
-      const data = await getDecks();
-      if (data.length > 0) setDecks(data);
-    }
-
-    if (!loading) {
-      fetchDecks();
-    }
+    // TODO: Fetch decks from Neon/Postgres
+    // Example: fetch('/api/decks').then(...)
   }, [loading]);
 
   useEffect(() => {
-    async function fetchClasses() {
-      const { data, error } = await supabase.from('classes').select('*');
-      if (!error && data) setClasses(data);
-    }
-    fetchClasses();
+    // TODO: Fetch classes from Neon/Postgres
+    // Example: fetch('/api/classes').then(...)
   }, []);
 
   const handleNewDeck = async () => {
-    const title = prompt("Enter a title for the new deck:");
-    if (!title) return;
-
-    // Get the current teacher's id
-    const { data: userData } = await supabase.auth.getUser();
-    const teacherId = userData?.user?.id;
-    if (!teacherId) {
-      alert("Could not determine teacher id. Please log in again.");
-      return;
-    }
-
-    const { data, error } = await createDeck(title, teacherId);
-    if (error) {
-      console.error("Error creating deck:", error.message);
-      alert("Could not create deck.");
-    } else {
-      setDecks((prev) => [...prev, data]);
-    }
+    // TODO: Implement deck creation with Neon/Postgres
+    // Prompt for deck title, then send to backend
   };
 
 
 
   const handleDeleteDeck = async (deckId: string) => {
-    if (!window.confirm('Are you sure you want to delete this deck? This cannot be undone.')) return;
-    const { error } = await deleteDeck(deckId);
-    if (error) {
-      alert('Error deleting deck.');
-    } else {
-      setDecks((prev) => prev.filter((deck) => deck.id !== deckId));
-    }
+    // TODO: Implement deck deletion with Neon/Postgres
   };
 
   const handleAssignDeck = async (deckId: string, classId: string) => {
-    if (!classId) return;
-    // Get current teacher's id
-    const { data: userData } = await supabase.auth.getUser();
-    const teacherId = userData?.user?.id;
-    if (!teacherId) {
-      alert('Could not determine teacher id. Please log in again.');
-      return;
-    }
-    const { error } = await supabase.from('assignments').insert({ deck_id: deckId, class_id: classId, teacher_id: teacherId });
-    if (error) {
-      alert('Error assigning deck.');
-    } else {
-      alert('Deck assigned!');
-      setAssigningDeckId(null);
-      setSelectedClassId('');
-    }
+    // TODO: Implement deck assignment with Neon/Postgres
   };
 
 
@@ -126,16 +74,7 @@ function TeacherHome() {
   };
 
   const handleSaveNewCards = async () => {
-    if (!addCardModal.deckId || newCards.length === 0) return;
-    const cardsToUpload = newCards.map(card => ({ ...card, deck_id: addCardModal.deckId! }));
-    const { error } = await uploadCards(cardsToUpload);
-    if (error) {
-      alert('Error saving cards.');
-    } else {
-      alert('Cards added!');
-      setAddCardModal({ open: false, deckId: null });
-      setNewCards([]);
-    }
+    // TODO: Implement card upload with Neon/Postgres
   };
 
   if (loading) return null;
@@ -217,22 +156,11 @@ function TeacherHome() {
                 disabled={selectedClassIds.length === 0 || !dueDate}
                 onClick={async () => {
                   // Assign to all selected classes
-                  const { data: userData } = await supabase.auth.getUser();
-                  const teacherId = userData?.user?.id;
-                  if (!teacherId) {
-                    alert('Could not determine teacher id. Please log in again.');
-                    return;
-                  }
-                  const inserts = selectedClassIds.map(classId => ({ deck_id: assigningDeckId, class_id: classId, teacher_id: teacherId, due_date: dueDate }));
-                  const { error } = await supabase.from('assignments').insert(inserts);
-                  if (error) {
-                    alert('Error assigning deck.');
-                  } else {
-                    alert('Deck assigned!');
-                    setAssigningDeckId(null);
-                    setSelectedClassIds([]);
-                    setDueDate(new Date().toISOString().slice(0, 10));
-                  }
+                  // TODO: Implement assignment logic with Neon/Postgres
+                  alert('Assignment functionality is not yet implemented.');
+                  setAssigningDeckId(null);
+                  setSelectedClassIds([]);
+                  setDueDate(new Date().toISOString().slice(0, 10));
                 }}
               >
                 Confirm

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from './supabaseClient';
+// import { supabase } from './supabaseClient';
 
 function TeacherLogin() {
   const [email, setEmail] = useState('');
@@ -10,16 +10,10 @@ function TeacherLogin() {
 
   const handleLogin = async () => {
     setError('');
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      setError(error.message);
-    } else {
-      navigate('/teacher-home');
-    }
+    // TODO: Implement login with Auth0/Clerk or custom Neon/Postgres auth
+    // Example: call /api/login endpoint
+    // On success: navigate('/teacher-home');
+    // On error: setError('Login failed');
   };
 
   return (

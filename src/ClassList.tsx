@@ -1,58 +1,51 @@
 import React, { useEffect, useState } from 'react';
 import TeacherLayout from './TeacherLayout';
-import { supabase } from './supabaseClient';
+// import { supabase } from './supabaseClient';
 import { useNavigate } from 'react-router-dom';
 
 function ClassList() {
   const [classes, setClasses] = useState<any[]>([]);
+  const [showModal, setShowModal] = useState(false);
+  const [newClassName, setNewClassName] = useState('');
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user) {
-        navigate('/login');
-      }
-    };
-    checkAuth();
+    // TODO: Replace with Auth0/Clerk authentication check
+    // Example: if (!isAuthenticated) navigate('/login');
   }, [navigate]);
 
   useEffect(() => {
-    const fetchClasses = async () => {
-      const { data, error } = await supabase.from('classes').select('*');
-      if (error) {
-        console.error('Error fetching classes:', error.message);
-      } else {
-        setClasses(data);
-      }
-    };
-    fetchClasses();
+    // TODO: Fetch classes from Neon/Postgres
+    // Example: fetch('/api/classes').then(...)
   }, []);
 
   const handleCreateClass = async () => {
-    const name = prompt('Enter a class name:');
-    if (!name) return;
-    let code = '';
-    while (!code) {
-      code = prompt('Enter a unique class code (e.g., MATH2024):')?.trim() || '';
-      if (!code) alert('Class code is required.');
-    }
-    const { data: session } = await supabase.auth.getUser();
-    const teacherId = session.user?.id;
-    if (!teacherId) {
-      alert('Teacher not logged in.');
-      return;
-    }
-    const { data, error } = await supabase
-      .from('classes')
-      .insert([{ name, code, teacher_id: teacherId }])
-      .select()
-      .single();
-    if (error) {
-      console.error('Error creating class:', error.message);
-      alert('Could not create class. (Is the code unique?)');
-    } else {
-      setClasses((prev) => [...prev, data]);
+    setShowModal(true);
+  };
+
+  const handleSaveClass = async () => {
+    if (!newClassName.trim()) return;
+    setSaving(true);
+    try {
+      const response = await fetch('/api/create-class', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newClassName /*, teacher_id: ... */ }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setSaving(false);
+        setShowModal(false);
+        setNewClassName('');
+        navigate(`/classes/${data.id}`);
+      } else {
+        alert(data.error || 'Failed to create class');
+        setSaving(false);
+      }
+    } catch (err) {
+      alert('Network error');
+      setSaving(false);
     }
   };
 
@@ -61,13 +54,7 @@ function ClassList() {
   };
 
   const handleDeleteClass = async (classId: string) => {
-    if (!window.confirm('Delete this class? This cannot be undone.')) return;
-    const { error } = await supabase.from('classes').delete().eq('id', classId);
-    if (!error) {
-      setClasses((prev) => prev.filter((c) => c.id !== classId));
-    } else {
-      alert('Error deleting class.');
-    }
+    // TODO: Implement class deletion with Neon/Postgres
   };
 
   return (
@@ -100,76 +87,146 @@ function ClassList() {
         ))}
         {classes.length === 0 && <div style={{ color: '#888' }}>No classes yet.</div>}
       </div>
+      {showModal && (
+        <div style={modalStyles.overlay as React.CSSProperties}>
+          <div style={modalStyles.modal as React.CSSProperties}>
+            <h2 style={{ marginBottom: '1rem' }}>Create New Class</h2>
+            <input
+              type="text"
+              placeholder="Class Name"
+              value={newClassName}
+              onChange={e => setNewClassName(e.target.value)}
+              style={modalStyles.input as React.CSSProperties}
+              autoFocus
+            />
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowModal(false)} style={modalStyles.cancelButton as React.CSSProperties} disabled={saving}>Cancel</button>
+              <button onClick={handleSaveClass} style={modalStyles.saveButton as React.CSSProperties} disabled={saving || !newClassName.trim()}>
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </TeacherLayout>
   );
 }
 
-const styles: { [key: string]: React.CSSProperties } = {
+const styles = {
   title: {
     fontSize: '2rem',
     marginBottom: '1rem',
-  },
+  } as React.CSSProperties,
+  newClassButton: {
+    marginBottom: '1rem',
+    padding: '0.5rem 1rem',
+    fontSize: '1rem',
+    backgroundColor: '#007bff',
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+  } as React.CSSProperties,
+  cardsWrapper: {
+    display: 'flex',
+    flexWrap: 'wrap' as React.CSSProperties['flexWrap'],
+    gap: '1rem',
+  } as React.CSSProperties,
   card: {
     backgroundColor: 'white',
+    borderRadius: '8px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
     padding: '1rem',
-    borderRadius: '8px',
-    boxShadow: '0 0 5px rgba(0,0,0,0.1)',
-    marginBottom: '1rem',
-    width: '100%',
+    minWidth: '250px',
+    flex: '1 0 250px',
     display: 'flex',
-    flexDirection: 'column',
-  },
-  newClassButton: {
-    backgroundColor: '#28a745',
-    color: 'white',
-    padding: '10px 20px',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    marginBottom: '1.5rem',
-    border: 'none',
-  },
+    flexDirection: 'column' as React.CSSProperties['flexDirection'],
+    justifyContent: 'space-between',
+  } as React.CSSProperties,
   cardHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    width: '100%',
-  },
-  viewButton: {
-    backgroundColor: '#007bff',
-    color: 'white',
-    padding: '8px 14px',
-    borderRadius: '6px',
-    cursor: 'pointer',
+  } as React.CSSProperties,
+  cardTitle: {
+    fontSize: '1.2rem',
+    marginBottom: '0.5rem',
+  } as React.CSSProperties,
+  cardDate: {
     fontSize: '0.9rem',
+    color: '#666',
+    marginBottom: '0.5rem',
+  } as React.CSSProperties,
+  buttonGroup: {
+    display: 'flex',
+    flexDirection: 'column' as React.CSSProperties['flexDirection'],
+    gap: '0.5rem',
+  } as React.CSSProperties,
+  viewButton: {
+    backgroundColor: '#28a745',
+    color: 'white',
     border: 'none',
-  },
+    borderRadius: '5px',
+    padding: '0.3rem 0.7rem',
+    cursor: 'pointer',
+  } as React.CSSProperties,
   deleteButton: {
     backgroundColor: '#dc3545',
     color: 'white',
-    padding: '8px 14px',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '0.9rem',
     border: 'none',
-  },
-  buttonGroup: {
+    borderRadius: '5px',
+    padding: '0.3rem 0.7rem',
+    cursor: 'pointer',
+  } as React.CSSProperties,
+};
+
+const modalStyles = {
+  overlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100vw',
+    height: '100vh',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     display: 'flex',
-    gap: '10px',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
   },
-  cardTitle: {
-    fontWeight: 700,
+  modal: {
+    backgroundColor: 'white',
+    borderRadius: '10px',
+    padding: '2rem',
+    minWidth: '320px',
+    boxShadow: '0 2px 16px rgba(0,0,0,0.18)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'stretch',
+  },
+  input: {
+    fontSize: '1.1rem',
+    padding: '0.75rem',
+    borderRadius: '6px',
+    border: '1px solid #ccc',
+    marginBottom: '0.5rem',
+  },
+  saveButton: {
+    backgroundColor: '#28a745',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    padding: '8px 18px',
+    cursor: 'pointer',
     fontSize: '1rem',
-    marginBottom: 0,
   },
-  cardDate: {
-    fontSize: '0.8rem',
-    color: '#666',
-    margin: 0,
-  },
-  cardsWrapper: {
-    width: '100%',
-    margin: 0,
-    padding: 0,
+  cancelButton: {
+    backgroundColor: '#e0e0e0',
+    color: '#333',
+    border: 'none',
+    borderRadius: '6px',
+    padding: '8px 18px',
+    cursor: 'pointer',
+    fontSize: '1rem',
   },
 };
 

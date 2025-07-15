@@ -1,7 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth0 } from '@auth0/auth0-react';
 
 function TeacherLayout({ children }: { children: React.ReactNode }) {
+  const { logout } = useAuth0();
   return (
     <div style={styles.wrapper}>
       <div style={styles.sidebar}>
@@ -9,6 +11,12 @@ function TeacherLayout({ children }: { children: React.ReactNode }) {
         <p><Link to="/teacher-home" style={styles.link}>My Decks</Link></p>
         <p><Link to="/classes" style={styles.link}>Classes</Link></p>
         <p><Link to="/assignments" style={styles.link}>Assignments</Link></p>
+        <button
+          style={styles.logoutButton}
+          onClick={() => logout({ returnTo: window.location.origin } as any)}
+        >
+          Log Out
+        </button>
       </div>
       <div style={styles.content}>
         {children}
@@ -40,6 +48,19 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: '2rem',
     backgroundColor: '#f8f9fa',
     overflowY: 'auto',
+  },
+  logoutButton: {
+    position: 'absolute',
+    bottom: '1rem',
+    left: '1rem',
+    backgroundColor: '#34495e',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    padding: '8px 16px',
+    cursor: 'pointer',
+    fontSize: '0.95rem',
+    opacity: 0.85,
   },
 };
 

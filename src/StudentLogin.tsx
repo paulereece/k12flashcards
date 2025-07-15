@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from './supabaseClient';
-import { getClassIdByCode } from './supabasehelpers';
+// import { supabase } from './supabaseClient';
+// import { getClassIdByCode } from './supabasehelpers';
 
 const StudentLogin: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -16,58 +16,47 @@ const StudentLogin: React.FC = () => {
     setError('');
     setLoading(true);
 
-    // 1. Look up class UUID by code
-    const { id: classId, error: classError } = await getClassIdByCode(classCode.trim());
-    if (classError || !classId) {
-      setError('Invalid class code.');
-      setLoading(false);
-      return;
-    }
-    // 2. Construct fake email
-    const email = `${username}+${classId}@k12flashcards.local`;
-    // 3. Try to log in with Supabase Auth
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    // TODO: Look up class UUID by code from Neon/Postgres
+    // TODO: Implement login with Auth0/Clerk or custom Neon/Postgres auth
+    // On success: localStorage.setItem('studentClassId', classId); navigate('/student-dashboard');
+    // On error: setError('Invalid username or password.');
     setLoading(false);
-    if (authError) {
-      setError('Invalid username or password.');
-    } else {
-      localStorage.setItem('studentClassId', classId); // Store classId for assignment fetching
-      navigate('/student-dashboard');
-    }
   };
 
   return (
     <div style={styles.wrapper}>
-      <div style={styles.container}>
-        <h1 style={styles.title}>Student Login</h1>
-        <form onSubmit={handleLogin} style={styles.form}>
+      <div style={styles.box}>
+        <h2 style={styles.title}>Student Login</h2>
+        <form onSubmit={handleLogin}>
           <input
+            style={styles.input}
             type="text"
             placeholder="Username"
             value={username}
-            onChange={e => setUsername(e.target.value)}
-            style={styles.input}
-            autoFocus
+            onChange={(e) => setUsername(e.target.value)}
+            autoComplete="off"
           />
           <input
+            style={styles.input}
             type="password"
             placeholder="Password"
             value={password}
-            onChange={e => setPassword(e.target.value)}
-            style={styles.input}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="off"
           />
           <input
+            style={styles.input}
             type="text"
             placeholder="Class Code"
             value={classCode}
-            onChange={e => setClassCode(e.target.value)}
-            style={styles.input}
+            onChange={(e) => setClassCode(e.target.value)}
+            autoComplete="off"
           />
-          {error && <div style={styles.error}>{error}</div>}
-          <button type="submit" style={styles.loginButton} disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
+          <button style={styles.button} type="submit" disabled={loading}>
+            {loading ? 'Logging in...' : 'Log In'}
           </button>
         </form>
+        {error && <p style={styles.error}>{error}</p>}
       </div>
     </div>
   );
@@ -81,45 +70,40 @@ const styles: { [key: string]: React.CSSProperties } = {
     height: '100vh',
     backgroundColor: '#f8f9fa',
   },
-  container: {
-    textAlign: 'center',
-    background: 'white',
-    padding: '2.5rem 2rem',
-    borderRadius: '12px',
-    boxShadow: '0 0 12px rgba(0,0,0,0.08)',
-    minWidth: '320px',
-  },
-  title: {
-    fontSize: '2rem',
-    marginBottom: '2rem',
-    color: '#212529',
-  },
-  form: {
+  box: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '1.25rem',
+    gap: '1rem',
+    padding: '2rem',
+    backgroundColor: 'white',
+    borderRadius: '10px',
+    boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+    minWidth: '300px',
+  },
+  title: {
+    marginBottom: '1rem',
+    fontSize: '1.5rem',
   },
   input: {
-    padding: '0.75rem 1rem',
+    padding: '0.75rem',
     fontSize: '1rem',
-    borderRadius: '8px',
+    borderRadius: '5px',
     border: '1px solid #ccc',
-    outline: 'none',
+    marginBottom: '0.5rem',
   },
-  loginButton: {
+  button: {
+    padding: '0.75rem',
+    fontSize: '1rem',
     backgroundColor: '#007bff',
     color: 'white',
     border: 'none',
-    borderRadius: '8px',
-    padding: '0.75rem 1.5rem',
-    fontSize: '1.1rem',
+    borderRadius: '5px',
     cursor: 'pointer',
-    fontWeight: 500,
   },
   error: {
-    color: '#dc3545',
-    fontSize: '1rem',
-    marginBottom: '-0.5rem',
+    color: 'red',
+    marginTop: '0.5rem',
+    fontSize: '0.9rem',
   },
 };
 
