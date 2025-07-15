@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TeacherLayout from './TeacherLayout';
 // import { supabase } from './supabaseClient';
+import { useAuth0 } from '@auth0/auth0-react';
 
 type Deck = {
   id: string;
@@ -27,6 +28,9 @@ function TeacherHome() {
     const today = new Date();
     return today.toISOString().slice(0, 10); // YYYY-MM-DD
   });
+  const { user, isAuthenticated, isLoading, getAccessTokenSilently } = useAuth0();
+  const [showNewDeckModal, setShowNewDeckModal] = useState(false);
+  const [newDeckTitle, setNewDeckTitle] = useState('');
 
   useEffect(() => {
     // TODO: Replace with Auth0/Clerk authentication check
@@ -35,24 +39,74 @@ function TeacherHome() {
   }, [navigate]);
 
   useEffect(() => {
-    // TODO: Fetch decks from Neon/Postgres
-    // Example: fetch('/api/decks').then(...)
-  }, [loading]);
+    if (!user || !user.sub) return;
+    setLoading(true);
+    fetch(`/api/decks?teacher_id=${encodeURIComponent(user.sub)}`)
+      .then(res => res.json())
+      .then(data => {
+        setDecks(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [user]);
 
   useEffect(() => {
     // TODO: Fetch classes from Neon/Postgres
     // Example: fetch('/api/classes').then(...)
   }, []);
 
-  const handleNewDeck = async () => {
-    // TODO: Implement deck creation with Neon/Postgres
-    // Prompt for deck title, then send to backend
+  useEffect(() => {
+    // Fetch classes for the current teacher when assigningDeckId is set (modal opens)
+    if (assigningDeckId && user && user.sub) {
+      fetch(`/api/classes?teacher_id=${encodeURIComponent(user.sub)}`)
+        .then(res => res.json())
+        .then(data => setClasses(data))
+        .catch(() => setClasses([]));
+    }
+  }, [assigningDeckId, user]);
+
+  const handleNewDeck = () => {
+    setShowNewDeckModal(true);
+    setNewDeckTitle('');
+  };
+
+  const handleCreateDeck = async () => {
+    if (!newDeckTitle.trim()) return;
+    if (!user || !user.sub) {
+      alert('Could not determine teacher id. Please log in again.');
+      return;
+    }
+    const teacherId = user.sub;
+    const teacherEmail = user.email;
+    try {
+      const response = await fetch('/api/create-deck', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newDeckTitle.trim(), teacher_id: teacherId, teacher_email: teacherEmail }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setDecks((prev) => [...prev, data]);
+        setShowNewDeckModal(false);
+        setNewDeckTitle('');
+      } else {
+        alert(data.error || 'Could not create deck.');
+      }
+    } catch (err) {
+      alert('Network error');
+    }
   };
 
 
 
   const handleDeleteDeck = async (deckId: string) => {
-    // TODO: Implement deck deletion with Neon/Postgres
+    if (!window.confirm('Are you sure you want to delete this deck? This cannot be undone.')) return;
+    const res = await fetch(`/api/decks/${deckId}`, { method: 'DELETE' });
+    if (res.ok) {
+      setDecks(prev => prev.filter(deck => deck.id !== deckId));
+    } else {
+      alert('Error deleting deck.');
+    }
   };
 
   const handleAssignDeck = async (deckId: string, classId: string) => {
@@ -74,7 +128,7 @@ function TeacherHome() {
     // TODO: Implement card upload with Neon/Postgres
   };
 
-  if (loading) return null;
+  if (loading) return <div>Loading decks...</div>;
 
   return (
     <TeacherLayout>
@@ -83,6 +137,36 @@ function TeacherHome() {
       <button onClick={handleNewDeck} style={styles.newDeckButton}>
         New Deck
       </button>
+      {showNewDeckModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modal}>
+            <h2 style={{ marginBottom: '1rem', fontWeight: 700 }}>Create New Deck</h2>
+            <input
+              type="text"
+              placeholder="Deck Title"
+              value={newDeckTitle}
+              onChange={e => setNewDeckTitle(e.target.value)}
+              style={styles.addCardInput}
+              autoFocus
+            />
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+              <button
+                style={styles.saveNewCardsButton}
+                disabled={!newDeckTitle.trim()}
+                onClick={handleCreateDeck}
+              >
+                Create
+              </button>
+              <button
+                style={styles.cancelModalButton}
+                onClick={() => { setShowNewDeckModal(false); setNewDeckTitle(''); }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {decks.map((deck) => (
         <div key={deck.id} style={styles.card}>
@@ -153,8 +237,21 @@ function TeacherHome() {
                 disabled={selectedClassIds.length === 0 || !dueDate}
                 onClick={async () => {
                   // Assign to all selected classes
-                  // TODO: Implement assignment logic with Neon/Postgres
-                  alert('Assignment functionality is not yet implemented.');
+                  if (!assigningDeckId) return;
+                  let success = true;
+                  for (const classId of selectedClassIds) {
+                    const res = await fetch('/api/assignments', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ deck_id: assigningDeckId, class_id: classId, due_date: dueDate })
+                    });
+                    if (!res.ok) success = false;
+                  }
+                  if (success) {
+                    alert('Deck assigned successfully!');
+                  } else {
+                    alert('Error assigning deck to one or more classes.');
+                  }
                   setAssigningDeckId(null);
                   setSelectedClassIds([]);
                   setDueDate(new Date().toISOString().slice(0, 10));

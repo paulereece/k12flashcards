@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const sidebarStyle: React.CSSProperties = {
   width: '260px',
@@ -42,6 +42,12 @@ const activeNavItemStyle: React.CSSProperties = {
 
 const StudentLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  function handleLogout() {
+    localStorage.removeItem('studentId');
+    localStorage.removeItem('studentClassId');
+    navigate('/student-login');
+  }
   return (
     <div style={{ display: 'flex' }}>
       <aside style={sidebarStyle}>
@@ -52,6 +58,26 @@ const StudentLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         >
           My Assignments
         </Link>
+        {/* Logout arrow in bottom left */}
+        <div
+          style={{
+            position: 'absolute',
+            left: 24,
+            bottom: 24,
+            cursor: 'pointer',
+            opacity: 0.5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 3,
+          }}
+          onClick={handleLogout}
+          title="Log out"
+        >
+          <svg width="12" height="12" viewBox="0 0 32 32" fill="none">
+            <path d="M20 8L12 16L20 24" stroke="#b3c7db" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span style={{ color: '#b3c7db', fontWeight: 400, fontSize: '0.65rem', letterSpacing: 0.1 }}>Log Out</span>
+        </div>
       </aside>
       <main style={mainStyle}>{children}</main>
     </div>

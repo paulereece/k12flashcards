@@ -50,7 +50,7 @@ CREATE TABLE public.classes (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name text NOT NULL,
     code text NOT NULL,
-    teacher_id uuid NOT NULL,
+    teacher_id text NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now()
 );
@@ -63,7 +63,7 @@ CREATE TABLE public.classes (
 CREATE TABLE public.decks (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name text NOT NULL,
-    teacher_id uuid NOT NULL,
+    teacher_id text NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now()
 );
@@ -102,7 +102,8 @@ CREATE TABLE public.study_sessions (
     student_id uuid NOT NULL,
     score_percent integer,
     completed_at timestamp with time zone DEFAULT now(),
-    created_at timestamp with time zone DEFAULT now()
+    created_at timestamp with time zone DEFAULT now(),
+    time_seconds integer
 );
 
 
@@ -111,9 +112,9 @@ CREATE TABLE public.study_sessions (
 --
 
 CREATE TABLE public.users (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    id text DEFAULT gen_random_uuid() NOT NULL,
     email text NOT NULL,
-    password text NOT NULL,
+    password text,
     role text DEFAULT 'teacher'::text NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
@@ -331,4 +332,6 @@ ALTER TABLE ONLY public.study_sessions
 --
 
 INSERT INTO public.schema_migrations (version) VALUES
+    ('20240715110000'),
+    ('20240715120000'),
     ('20250715024305');

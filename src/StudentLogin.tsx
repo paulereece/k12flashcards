@@ -16,18 +16,33 @@ const StudentLogin: React.FC = () => {
     setError('');
     setLoading(true);
 
-    // TODO: Look up class UUID by code from Neon/Postgres
-    // TODO: Implement login with Auth0/Clerk or custom Neon/Postgres auth
-    // On success: localStorage.setItem('studentClassId', classId); navigate('/student-dashboard');
-    // On error: setError('Invalid username or password.');
-    setLoading(false);
+    try {
+      const response = await fetch('/api/student-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, classCode }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        // Store student id and class_id in localStorage
+        localStorage.setItem('studentId', data.id);
+        localStorage.setItem('studentClassId', data.class_id);
+        navigate('/student-dashboard');
+      } else {
+        setError(data.error || 'Login failed.');
+      }
+    } catch (err) {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div style={styles.wrapper}>
       <div style={styles.box}>
         <h2 style={styles.title}>Student Login</h2>
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleLogin} style={styles.form}>
           <input
             style={styles.input}
             type="text"
@@ -73,37 +88,55 @@ const styles: { [key: string]: React.CSSProperties } = {
   box: {
     display: 'flex',
     flexDirection: 'column',
+    alignItems: 'center',
     gap: '1rem',
-    padding: '2rem',
+    padding: '2.5rem 2rem',
     backgroundColor: 'white',
-    borderRadius: '10px',
-    boxShadow: '0 0 10px rgba(0,0,0,0.1)',
-    minWidth: '300px',
+    borderRadius: '12px',
+    boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+    minWidth: '340px',
+    maxWidth: '90vw',
   },
   title: {
-    marginBottom: '1rem',
-    fontSize: '1.5rem',
+    marginBottom: '1.5rem',
+    fontSize: '2rem',
+    fontWeight: 700,
+    color: '#212529',
+    textAlign: 'center',
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+    width: '100%',
   },
   input: {
-    padding: '0.75rem',
-    fontSize: '1rem',
-    borderRadius: '5px',
+    padding: '0.85rem',
+    fontSize: '1.05rem',
+    borderRadius: '6px',
     border: '1px solid #ccc',
-    marginBottom: '0.5rem',
+    marginBottom: 0,
+    background: '#f6f8fa',
+    outline: 'none',
+    transition: 'border 0.2s',
   },
   button: {
-    padding: '0.75rem',
-    fontSize: '1rem',
+    padding: '0.85rem',
+    fontSize: '1.1rem',
     backgroundColor: '#007bff',
     color: 'white',
     border: 'none',
-    borderRadius: '5px',
+    borderRadius: '6px',
     cursor: 'pointer',
+    fontWeight: 600,
+    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+    transition: 'background 0.2s',
   },
   error: {
     color: 'red',
     marginTop: '0.5rem',
-    fontSize: '0.9rem',
+    fontSize: '0.95rem',
+    textAlign: 'center',
   },
 };
 
