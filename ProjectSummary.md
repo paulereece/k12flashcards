@@ -1,7 +1,7 @@
 # Project Summary
 
 ## Overview
-K12 Flashcards is a web application for teachers and students to manage, assign, and study flashcards. The project is currently migrating from Supabase (for database and authentication) to Neon (Postgres database) and Auth0 (authentication).
+K12 Flashcards is a web application for teachers and students to manage, assign, and study flashcards. The project is currently migrated from Supabase (for database and authentication) to Neon (Postgres database) and Auth0 (authentication), and is now deployed on Render (not Vercel).
 
 ### Authentication Philosophy
 - The system supports two types of users: teachers (who use Auth0 for secure login) and students (who use teacher-managed accounts, not Auth0).
@@ -10,29 +10,26 @@ K12 Flashcards is a web application for teachers and students to manage, assign,
 
 ## Tech Stack
 - **Frontend:** React (TypeScript, Vite)
-- **Backend/API:** Node.js (Express server, custom API endpoints in `/api` and `server.js`)
+- **Backend/API:** Node.js (Express server, custom API endpoints in `server.js`)
 - **Database:** Neon (Postgres, managed via SQL migrations)
 - **Authentication:** Auth0 (in progress, replacing Supabase Auth)
-- **Deployment:** Vercel (API endpoints in `/api` for serverless functions)
+- **Deployment:** Render (API endpoints in `server.js` for all environments)
 
 ## Current Architecture
 - **Frontend**: Uses React Router for navigation. Auth0 is integrated via `@auth0/auth0-react` in `App.tsx` and `TeacherLayout.tsx` for login/logout and route protection. Student login is still being migrated.
-- **Backend**: Two approaches:
-  - `server.js` runs a local Express server for development, handling API routes and connecting to Neon via the `pg` library.
-  - `/api` directory contains Vercel serverless functions (e.g., `add-student.ts`, `create-class.ts`) for deployment.
+- **Backend**: `server.js` runs an Express server for all environments (local dev and Render deployment), handling API routes and connecting to Neon via the `pg` library. There is no longer an `/api` directory or Vercel serverless functions.
 - **Database**: Schema is defined in `db/schema.sql` and migrations in `db/migrations/`. Tables include users, classes, students, decks, cards, assignments, and study_sessions.
 
 ## Migration Status
 - **Supabase**: All direct Supabase code is commented out or removed. Some references remain as TODOs.
 - **Neon**: All new data operations (class, student, etc.) use Neon/Postgres via the `pg` library.
 - **Auth0**: Teacher authentication is partially integrated (see `App.tsx`, `TeacherLayout.tsx`). Student authentication is not yet migrated; login is still a placeholder.
-- **API**: Some endpoints are duplicated (in both `server.js` and `/api/` for Vercel). Both use Neon/Postgres.
+- **API**: All endpoints are now defined in `server.js`. There is no `/api` directory or Vercel serverless functions.
 - **Frontend**: Many TODOs remain for fetching data from Neon/Postgres and for integrating Auth0 for all user types.
 
 ## Troubleshooting & History
 - Migration from Supabase to Neon required updating all database queries to use the `pg` library and Postgres SQL.
 - Auth0 integration is ongoing. Teacher login/logout works, but student login and password reset are not yet implemented.
-- Some endpoints and logic are duplicated between `server.js` (local dev) and `/api/` (Vercel deploy). This may cause confusion.
 - The database schema is stable and managed via SQL migrations.
 - No major errors currently, but some features are incomplete (e.g., assignment logic, CSV import, full Auth0 integration).
 - The user has a zipped copy of the old Supabase version of the project, which can be referenced to restore or replicate features (such as deck functionality) as needed during migration.
@@ -40,22 +37,19 @@ K12 Flashcards is a web application for teachers and students to manage, assign,
 ## Local Development & Workflow Plan
 - For local development, run both the Vite frontend (localhost:5173) and the Express backend (server.js, typically on localhost:3001).
 - All API endpoints should be defined in server.js. The frontend should make API calls to http://localhost:3001/api/...
-- Avoid duplicating API logic between server.js and the /api directory. Use server.js as the single source of truth for API endpoints during local development.
-  - When adding new API endpoints, always add them to server.js (not /api/) for local development. This keeps the workflow simple and avoids confusion. If/when deploying to Vercel, endpoints can be migrated to /api as needed, but server.js remains the main backend for local dev.
-- This approach allows for fast iteration without needing to push to git or deploy to Vercel for every change.
-- When deploying to Vercel, you MUST migrate/copy all backend endpoints you need to the /api directory as serverless functions. Endpoints in server.js are NOT used in production on Vercel. If an endpoint is only in server.js, it will NOT be available after deployment. Always ensure all required API logic is present in /api before launching to production. This avoids confusion and ensures your app works as expected after launch.
+- Avoid duplicating API logic. Use server.js as the single source of truth for API endpoints during local development and production.
+- This approach allows for fast iteration without needing to push to git or deploy for every change.
 - If you encounter 404 errors for API endpoints, check that the endpoint exists in server.js and that the backend server is running.
 
 ## Vite Proxy Setup for Local Development
 - The Vite dev server is configured to proxy all /api requests to the Express backend at http://localhost:3001.
 - This means you can use fetch('/api/...') in your frontend code, and it will automatically reach the backend during local development.
 - No need to hardcode API URLs or worry about CORS/404 errors.
-- This is the industry standard for modern web development and matches real team workflows.
 - See vite.config.ts for the proxy configuration.
 
 ## User Notes & Questions
 - [Add your own notes, questions, or reminders here.]
-- If you encounter issues with login or data, check if you are running the correct backend (local server or Vercel API).
+- If you encounter issues with login or data, check if you are running the correct backend (local server or Render deployment).
 - For future troubleshooting, add a summary of the problem and what was tried here. 
 
 ## Migration & Debugging Session Summary (2024-07-15)
@@ -89,6 +83,6 @@ K12 Flashcards is a web application for teachers and students to manage, assign,
 - Ensured keyboard navigation: Enter submits answers and advances cards.
 - Fixed bugs where the input would disappear or the UI would get stuck.
 - Confirmed that the “Assign” button in TeacherHome currently only opens a modal and does not perform any backend logic yet.
-- Clarified and documented in ProjectSummary.md that all production endpoints must be present in /api/ for Vercel deployment—server.js is not used in production.
+- Clarified and documented in ProjectSummary.md that all production endpoints are now in server.js and there is no /api directory or Vercel deployment.
 - Added a section to ProjectSummary.md documenting the authentication philosophy: teachers use Auth0, students use teacher-managed accounts, and Google Classroom integration may be added in the future but is not required.
 - Ensured navigation and UX are professional and user-friendly, with dashboard routing based on user type. 

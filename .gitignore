@@ -23,4 +23,24 @@ dist-ssr
 *.sln
 *.sw?
 
-.vercel
+# local env files
+.env
+.env.*
+
+# database
+*.sqlite
+*.db
+
+# build output
+dist/
+
+# IDE/editor
+.vscode/
+.idea/
+.DS_Store
+
+# node
+node_modules/
+
+# OS
+Thumbs.db
