@@ -607,3 +607,14 @@ app.get('/api/study-sessions', async (req, res) => {
     return res.status(500).json({ error: 'Database error', details: err.message });
   }
 }); 
+
+// Serve static files from the React app (dist) in production
+const distPath = path.join(__dirname, 'dist');
+app.use(express.static(distPath));
+
+// Catch-all: send back React's index.html for any non-API route
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(distPath, 'index.html'));
+  }
+}); 
