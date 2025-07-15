@@ -22,7 +22,6 @@ function TeacherHome() {
   const navigate = useNavigate();
   const [classes, setClasses] = useState<any[]>([]);
   const [assigningDeckId, setAssigningDeckId] = useState<string | null>(null);
-  const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]);
   const [dueDate, setDueDate] = useState<string>(() => {
     const today = new Date();
@@ -56,12 +55,15 @@ function TeacherHome() {
     // TODO: Implement deck deletion with Neon/Postgres
   };
 
+<<<<<<< HEAD
   const handleAssignDeck = async (deckId: string, classId: string) => {
     // TODO: Implement deck assignment with Neon/Postgres
   };
 
 
 
+=======
+>>>>>>> 58e632612f29985ae8dd4bb0be9df53ac04262d4
   const handleAddCardToList = () => {
     if (!questionInput.trim() || !answerInput.trim()) return;
     setNewCards((prev) => [...prev, { question: questionInput.trim(), answer: answerInput.trim() }]);
