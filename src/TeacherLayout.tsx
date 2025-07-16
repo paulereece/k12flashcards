@@ -13,7 +13,7 @@ function TeacherLayout({ children }: { children: React.ReactNode }) {
         <p><Link to="/assignments" style={styles.link}>Assignments</Link></p>
         <button
           style={styles.logoutButton}
-          onClick={() => logout({ returnTo: window.location.origin } as any)}
+          onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
         >
           Log Out
         </button>
