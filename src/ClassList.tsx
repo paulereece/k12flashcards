@@ -34,7 +34,7 @@ function ClassList() {
   const fetchClasses = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/classes');
+      const response = await fetch(`/api/classes?teacher_id=${encodeURIComponent(user?.sub || '')}`);
       if (response.ok) {
         const data = await response.json();
         setClasses(data);
@@ -49,6 +49,29 @@ function ClassList() {
       setLoading(false);
     }
   };
+
+  // Ensure user exists in database on first login
+  useEffect(() => {
+    if (!user || !user.sub || !user.email) return;
+    
+    fetch('/api/ensure-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        user_id: user.sub, 
+        email: user.email 
+      }),
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        console.log('User ensured in database');
+      }
+    })
+    .catch(err => {
+      console.error('Failed to ensure user:', err);
+    });
+  }, [user]);
 
   const handleCreateClass = async () => {
     setShowModal(true);

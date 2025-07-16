@@ -10,17 +10,19 @@ console.log('[server.js] DATABASE_URL at startup:', process.env.DATABASE_URL);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables from dbmate.env
-const envPath = path.join(__dirname, 'dbmate.env');
-if (fs.existsSync(envPath)) {
-  const envContent = fs.readFileSync(envPath, 'utf8');
-  // Match both quoted and unquoted DATABASE_URL
-  const match = envContent.match(/DATABASE_URL=\"?([^\"\n]+)\"?/);
-  if (match) {
-    process.env.DATABASE_URL = match[1];
-    console.log('[server.js] Loaded DATABASE_URL from dbmate.env');
-  } else {
-    console.warn('[server.js] Could not find DATABASE_URL in dbmate.env');
+// Only load dbmate.env in local development (not in production)
+if (process.env.NODE_ENV !== 'production') {
+  const envPath = path.join(__dirname, 'dbmate.env');
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    // Match both quoted and unquoted DATABASE_URL
+    const match = envContent.match(/DATABASE_URL="?([^"\n]+)"?/);
+    if (match) {
+      process.env.DATABASE_URL = match[1];
+      console.log('[server.js] Loaded DATABASE_URL from dbmate.env');
+    } else {
+      console.warn('[server.js] Could not find DATABASE_URL in dbmate.env');
+    }
   }
 }
 
@@ -50,6 +52,29 @@ async function ensureUserExists(client, userId, email) {
     console.log(`[ensureUserExists] User already exists: ${userId}`);
   }
 }
+
+// Ensure user exists endpoint
+app.post('/api/ensure-user', async (req, res) => {
+  const { user_id, email } = req.body;
+  
+  if (!user_id || !email) {
+    return res.status(400).json({ error: 'Missing user_id or email' });
+  }
+
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+  });
+
+  try {
+    await client.connect();
+    await ensureUserExists(client, user_id, email);
+    await client.end();
+    return res.status(200).json({ success: true, message: 'User ensured' });
+  } catch (err) {
+    await client.end();
+    return res.status(500).json({ error: 'Database error', details: err.message });
+  }
+});
 
 app.post('/api/create-class', async (req, res) => {
   const { name, teacher_id, teacher_email } = req.body;
@@ -241,22 +266,18 @@ app.get('/api/assignments/:id', async (req, res) => {
 
 app.get('/api/classes', async (req, res) => {
   const { teacher_id } = req.query;
+  if (!teacher_id) {
+    return res.status(400).json({ error: 'Missing teacher_id' });
+  }
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
   });
   try {
     await client.connect();
-    let result;
-    if (teacher_id) {
-      result = await client.query(
-        'SELECT id, name, code, created_at, updated_at FROM classes WHERE teacher_id = $1 ORDER BY created_at DESC',
-        [teacher_id]
-      );
-    } else {
-      result = await client.query(
-        'SELECT id, name, code, created_at, updated_at FROM classes ORDER BY created_at DESC'
-      );
-    }
+    const result = await client.query(
+      'SELECT id, name, code, created_at, updated_at FROM classes WHERE teacher_id = $1 ORDER BY created_at DESC',
+      [teacher_id]
+    );
     await client.end();
     return res.status(200).json(result.rows);
   } catch (err) {

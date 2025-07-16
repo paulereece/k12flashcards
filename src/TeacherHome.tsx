@@ -50,6 +50,29 @@ function TeacherHome() {
       .catch(() => setLoading(false));
   }, [user]);
 
+  // Ensure user exists in database on first login
+  useEffect(() => {
+    if (!user || !user.sub || !user.email) return;
+    
+    fetch('/api/ensure-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        user_id: user.sub, 
+        email: user.email 
+      }),
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        console.log('User ensured in database');
+      }
+    })
+    .catch(err => {
+      console.error('Failed to ensure user:', err);
+    });
+  }, [user]);
+
   useEffect(() => {
     // TODO: Fetch classes from Neon/Postgres
     // Example: fetch('/api/classes').then(...)
