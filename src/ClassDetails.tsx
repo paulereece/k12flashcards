@@ -33,7 +33,7 @@ const ClassDetails: React.FC = () => {
     // Fetch students for this class
     async function fetchStudents() {
       try {
-        const res = await fetch(`http://localhost:3001/api/classes/${classId}/students`);
+        const res = await fetch(`/api/classes/${classId}/students`);
         if (res.ok) {
           const data = await res.json();
           setStudents(data);
@@ -51,7 +51,7 @@ const ClassDetails: React.FC = () => {
     if (!newStudent.username.trim() || !newStudent.password.trim()) return;
     setAdding(true);
     try {
-      const res = await fetch('http://localhost:3001/api/add-student', {
+      const res = await fetch('/api/add-student', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -91,7 +91,7 @@ const ClassDetails: React.FC = () => {
     if (!newClassName.trim()) return;
     setSavingName(true);
     try {
-      const res = await fetch(`http://localhost:3001/api/classes/${classId}`, {
+      const res = await fetch(`/api/classes/${classId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newClassName.trim() })
